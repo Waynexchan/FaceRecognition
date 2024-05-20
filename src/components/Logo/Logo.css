@@ -1,0 +1,14 @@
+.Tilt {
+    height: 150px;
+    width: 150px;
+    background: linear-gradient(89deg, #FE5EDF 0%, #04C8DE 100%);
+    transition: transform 0.2s ease-in-out;
+
+}
+
+.inner-tilt {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
