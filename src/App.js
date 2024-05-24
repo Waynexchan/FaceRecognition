@@ -53,10 +53,28 @@ class App extends Component {
       box: {},
       route: 'signin',
       isSignedIn:false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
-    this.MODEL_ID = 'color-recognitions'; // 定義 MODEL_ID
-    this.MODEL_VERSION_ID = '6dc7e46bc9124c5c8824be4822abe105'; // 定義 MODEL_VERSION_ID
+    this.MODEL_ID = 'face-detection'; // define MODEL_ID
+    this.MODEL_VERSION_ID = '6dc7e46bc9124c5c8824be4822abe105'; // define MODEL_VERSION_ID
   }
+
+  loadUser = (data) =>{
+    this.setState({user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+  }})
+  }
+ 
 
   calculateFaceLocation = (data) => {
     if (data && data.outputs && data.outputs[0].data.regions) {
@@ -100,22 +118,23 @@ class App extends Component {
   }
 
   render() {
+    const { isSignedIn, box, imageUrl, route} = this.state;
     return (
       <div className="App">
         <ParticlesBg type="random" bg={true} />
-        <Navigation isSignedIn={this.state.isSignedIn} onRouteChange={this.onRouteChange}/>
+        <Navigation isSignedIn={isSignedIn} onRouteChange={this.onRouteChange}/>
         {this.state.route === 'home' 
         ? 
           <div>
             <Logo />
-            <Rank />
+            <Rank name={this.state.user.name} entries={this.state.user.entries}/> 
             <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit} />
-            <FaceRecognition box={this.state.box} imageUrl={this.state.imageUrl} />
+            <FaceRecognition box={box} imageUrl={imageUrl} />
           </div>
         :(
-          this.state.route === 'signin'
-          ? <Signin onRouteChange={this.onRouteChange}/>
-          : <Register onRouteChange={this.onRouteChange}/>
+          route === 'signin'
+          ? <Signin loadUser={this.loadUser} onRouteChange={this.onRouteChange} /> 
+          : <Register loadUser= {this.loadUser} onRouteChange={this.onRouteChange}/>
         )
         }
       </div>
