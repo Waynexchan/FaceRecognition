@@ -9,57 +9,27 @@ import ImageLinkForm from './components/ImageLinkForm/ImageLinkForm';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 import ParticlesBg from 'particles-bg';
 
-const returnClarifaiRequestOptions = (imageUrl) => {
-  const PAT = '17fb6892b58947a38e9526e16e3fb987'; 
-  const USER_ID = 'clarifai'; 
-  const APP_ID = 'main'; 
-  const IMAGE_URL = imageUrl;
 
-  const raw = JSON.stringify({
-    "user_app_id": {
-      "user_id": USER_ID,
-      "app_id": APP_ID
-    },
-    "inputs": [
-      {
-        "data": {
-          "image": {
-            "url": IMAGE_URL
-          }
-        }
-      }
-    ]
-  });
 
-  const requestOptions = {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Authorization': 'Key ' + PAT
-    },
-    body: raw
-  };
-
-  return requestOptions;
+const initialState ={
+    input: '',
+    imageUrl: '',
+    box: {},
+    route: 'signin',
+    isSignedIn: false,
+    user: {
+      id: '',
+      name: '',
+      email: '',
+      entries: 0,
+      joined: ''
+  }
 }
 
 class App extends Component {
   constructor() {
     super();
-    this.state = {
-      input: '',
-      imageUrl: '',
-      box: {},
-      route: 'signin',
-      isSignedIn: false,
-      user: {
-        id: '',
-        name: '',
-        email: '',
-        entries: 0,
-        joined: ''
-      }
-    }
+    this.state = initialState;
     this.MODEL_ID = 'face-detection'; // define MODEL_ID
     this.MODEL_VERSION_ID = '6dc7e46bc9124c5c8824be4822abe105'; // define MODEL_VERSION_ID
   }
@@ -102,31 +72,38 @@ class App extends Component {
 
   onPictureSubmit = () => {
     this.setState({ imageUrl: this.state.input });
-    fetch(`https://api.clarifai.com/v2/models/${this.MODEL_ID}/versions/${this.MODEL_VERSION_ID}/outputs`, returnClarifaiRequestOptions(this.state.input))
-      .then(response => response.json())
-      .then(response => {
-        if (response.outputs) {
-          fetch('http://localhost:3000/image', {
-            method: 'put',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: this.state.user.id
-            })
-          })
-            .then(response => response.json())
-            .then(count => {
-              this.setState(Object.assign(this.state.user, { entries: count }))
-            })
-            .catch(console.log)
-          this.displayFaceBox(this.calculateFaceLocation(response))
-        }
+    // 呼叫後端來處理 Clarifai API 的調用
+    fetch('http://localhost:3000/imageurl', {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: this.state.input
       })
-      .catch(err => console.log(err));
-  }
+    })
+    .then(response => response.json())
+    .then(response => {
+      if (response) {
+        this.displayFaceBox(this.calculateFaceLocation(response));
+        fetch('http://localhost:3000/image', {
+          method: 'put',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: this.state.user.id
+          })
+        })
+        .then(response => response.json())
+        .then(count => {
+          this.setState(Object.assign(this.state.user, { entries: count }))
+        })
+        .catch(console.log);
+      }
+    })
+    .catch(err => console.log(err));
+  };
 
   onRouteChange = (route) => {
     if (route === 'signout') {
-      this.setState({ isSignedIn: false })
+      this.setState(initialState)
     } else if (route === 'home') {
       this.setState({ isSignedIn: true })
     }
